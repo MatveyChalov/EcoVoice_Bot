@@ -74,7 +74,7 @@ Telegram-бот для хакатона, который помогает люд�
 | **Telegram API** | [aiogram 3](https://docs.aiogram.dev) | Асинхронная работа с Telegram Bot API |
 | **Синтез речи** | [edge-tts](https://github.com/rany2/edge-tts) | Генерация русского голоса (Svetlana) |
 | **Аудио-конвертация** | ffmpeg + libopus | Конвертация MP3 → OGG/Opus (формат voice) |
-| **ИИ + Компьютерное зрение** | Groq (OpenAI-совместимый API) | Текст (LLM) + изображения (vision LLM) |
+| **ИИ + Компьютерное зрение** | Google Gemini (OpenAI-совместимый API) | Текст (LLM) + изображения (vision LLM) |
 | **Конфигурация** | python-dotenv | Загрузка секретов из `.env` |
 | **Запуск (локально)** | uv / venv | Управление зависимостями |
 | **Запуск (облако)** | Google Colab | Бесплатный запуск без установки |
@@ -86,8 +86,9 @@ Telegram-бот для хакатона, который помогает люд�
 **Почему edge-tts:** лучшее качество русского синтеза речи среди бесплатных
 решений, точный голос `ru-RU-SvetlanaNeural`, высокая скорость.
 
-**Почему Groq:** бесплатный тариф, высокая скорость инференса, поддержка
-vision-моделей (Llama 4 Scout) — идеально для хакатона.
+**Почему Gemini:** бесплатный тариф в AI Studio, отличное качество русского
+языка и сильная vision-модель (Flash умеет и тексты, и картинки одной моделью) —
+идеально для хакатона.
 
 ---
 
@@ -106,7 +107,7 @@ vision-моделей (Llama 4 Scout) — идеально для хакатон
                         │              │
               ┌─────────▼───┐   ┌──────▼─────────┐
               │ ai_service  │   │ voice_service  │
-              │ (Groq API)  │   │ (edge-tts)     │
+              │ (Gemini API)│   │ (edge-tts)     │
               │  text/image │   │  text→ogg      │
               └─────────┬───┘   └──────┬─────────┘
                         │              │
@@ -118,7 +119,7 @@ vision-моделей (Llama 4 Scout) — идеально для хакатон
 Поток ответа на сообщение:
   1. Пользователь шлёт текст или фото.
   2. bot.py показывает статус «записывает голосовое».
-  3. ai_service.py вызывает Groq и получает ответ/вердикт.
+  3. ai_service.py вызывает Gemini и получает ответ/вердикт.
   4. voice_service.py синтезирует речь и конвертирует в OGG/Opus.
   5. bot.py отправляет ответ текстом + голосовым сообщением.
   6. Временные аудио и фото удаляются (finally).
@@ -134,7 +135,7 @@ vision-моделей (Llama 4 Scout) — идеально для хакатон
 - Python 3.10+ (рекомендуется 3.11/3.12)
 - [ffmpeg](https://ffmpeg.org) в PATH (для голосовых)
 - Токен бота от [@BotFather](https://t.me/BotFather)
-- Ключ API от [Groq](https://console.groq.com)
+- Ключ API от [Google AI Studio](https://aistudio.google.com)
 
 **Шаги:**
 
@@ -190,11 +191,11 @@ python bot.py
 # Токен бота: получите у @BotFather в Telegram
 BOT_TOKEN=123456789:AAE...твой_токен...
 
-# Ключ ИИ (OpenAI-совместимый API). У нас — Groq:
-AI_API_KEY=gsk_...твой_ключ...
-AI_BASE_URL=https://api.groq.com/openai/v1
-AI_MODEL=llama-3.3-70b-versatile
-AI_VISION_MODEL=llama-4-scout-17b-16e-instruct
+# Ключ ИИ (OpenAI-совместимый API). У нас — Google Gemini:
+AI_API_KEY=AIza...твой_ключ...
+AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+AI_MODEL=gemini-3.8-flash
+AI_VISION_MODEL=gemini-3.8-flash
 ```
 
 > В **Colab-версии** токены вставляются прямо в последнюю ячейку блокнота
@@ -266,7 +267,7 @@ eco_voice_bot/
 | Модуль | Ответственность |
 |--------|-----------------|
 | `bot.py` | Telegram-интерфейс: `/start`, текст, фото, статусы, ошибки |
-| `ai_service.py` | ИИ-анализ текста и изображений через Groq |
+| `ai_service.py` | ИИ-анализ текста и изображений через Gemini |
 | `voice_service.py` | Синтез речи (edge-tts) + конвертация в OGG/Opus + очистка |
 | `EcoVoice_Bot.ipynb` | Автономная версия для Colab (весь код внутри) |
 
@@ -299,7 +300,7 @@ uv run --with flake8 flake8 bot.py ai_service.py voice_service.py
 | `ModuleNotFoundError: aiogram` | Пакеты не установлены / не тот Python | Установи через `.venv`: `uv pip install -r requirements.txt` |
 | Pylance: «не удается разрешить импорт» | VS Code смотрит не в `.venv` | `Ctrl+Shift+P → Python: Select Interpreter → .venv\Scripts\python.exe` |
 | Бот запущен, но не голосовые | Нет `ffmpeg` | Установи ffmpeg (winget) — иначе придёт MP3 как аудио, не voice |
-| «Не удалось получить ответ от ИИ» | Неверный ключ / закончилась квота Groq | Проверь `AI_API_KEY`, лимиты на console.groq.com |
+| «Не удалось получить ответ от ИИ» | Неверный ключ / закончилась квота Gemini | Проверь `AI_API_KEY`, лимиты на aistudio.google.com |
 | Голос приходит как файл, а не voice | MP3 не сконвертирован в OGG/Opus | Убедись, что ffmpeg в PATH |
 | Логи обрываются / бот молчит в Colab | Сессия Colab отключилась | Перезапусти рантайм и снова выполни ячейки |
 | `externally-managed-environment` | Глобальный Python управляется uv/системой | НЕ ставь глобально. Создай `.venv` в проекте |
@@ -313,13 +314,14 @@ uv run --with flake8 flake8 bot.py ai_service.py voice_service.py
 
 | Провайдер | `AI_BASE_URL` | Пример модели | Примечание |
 |-----------|---------------|---------------|------------|
-| **Groq** (по умолчанию) | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` | бесплатно, очень быстро |
+| **Google Gemini** (по умолчанию) | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-3.8-flash` | бесплатно, сильная vision |
+| Groq | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` | очень быстро, бесплатно |
 | OpenAI | `https://api.openai.com/v1` | `gpt-4o` | платно, лидер качества |
-| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-2.0-flash` | есть бесплатный тариф |
 | Любой совместимый | свой URL | своя модель | OpenAI-формат `/v1/chat/completions` |
 
-> Для анализа фото нужна **vision-модель**: у Groq это `llama-4-scout`,
-> у OpenAI — `gpt-4o` и т.п. Текстовая модель и vision-модель — разные.
+> Для анализа фото можно использовать ту же модель (`gemini-3.8-flash`
+> умеет зрение). Если провайдер требует отдельную vision-модель (например,
+> Groq `llama-4-scout`) — задайте её в `AI_VISION_MODEL`.
 
 ---
 
